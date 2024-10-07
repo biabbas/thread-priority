@@ -51,6 +51,8 @@ fn errno() -> libc::c_int {
                 *libc::__errno_location()
             } else if #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd"))] {
                 *libc::__error()
+            }  else if #[cfg(target_os = "vxworks")] {
+                libc::errnoGet()
             } else {
                 compile_error!("Your OS is probably not supported.")
             }
@@ -67,6 +69,8 @@ fn set_errno(number: libc::c_int) {
                 *libc::__errno_location() = number;
             } else if #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd"))] {
                 *libc::__error() = number;
+            } else if #[cfg(target_os = "vxworks")] {
+                let _ = libc::errnoSet(number);
             } else {
                 compile_error!("Your OS is probably not supported.")
             }

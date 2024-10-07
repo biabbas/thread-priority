@@ -154,6 +154,7 @@
     target_os = "openbsd",
     target_os = "netbsd",
     target_os = "android",
+    target_os = "vxworks",
     target_arch = "wasm32",
 ))]
 pub mod unix;
@@ -169,6 +170,7 @@ use std::time::Duration;
     target_os = "openbsd",
     target_os = "netbsd",
     target_os = "android",
+    target_os = "vxworks",
     target_arch = "wasm32",
 ))]
 pub use unix::*;
