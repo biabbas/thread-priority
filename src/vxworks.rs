@@ -8,11 +8,34 @@ use std::convert::TryFrom;
 
 #[cfg(target_os = "android")]
 use libc::SCHED_NORMAL as SCHED_OTHER;
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "vxworks")))]
 use libc::SCHED_OTHER;
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use libc::{SCHED_BATCH, SCHED_IDLE};
+#[cfg(not(target_os = "vxworks"))]
 use libc::{SCHED_FIFO, SCHED_RR};
+
+pub const SCHED_FIFO: libc::c_int = 0x01;
+pub const SCHED_RR: libc::c_int = 0x02;
+pub const SCHED_OTHER: libc::c_int = 0x04;
+pub const SCHED_SPORADIC: libc::c_int = 0x08;
+pub const PRIO_PROCESS: u32 = 0;
+
+extern "C"{
+    pub fn sched_get_priority_max(policy: libc::c_int) -> libc::c_int;
+    pub fn sched_get_priority_min(policy: libc::c_int) -> libc::c_int;
+    pub fn pthread_setschedparam(
+        native: libc::pthread_t,
+        policy: libc::c_int,
+        param: *const libc::_Sched_param,
+    ) -> libc::c_int;
+    pub fn pthread_getschedparam(
+        native: libc::pthread_t,
+        policy: *mut libc::c_int,
+        param: *mut libc::_Sched_param,
+    ) -> libc::c_int;
+    pub fn setpriority(which: u32, who: u32, prio: i32) -> libc::c_int;
+}
 
 use crate::{Error, ThreadPriority, ThreadPriorityValue};
 use std::mem::MaybeUninit;
@@ -366,12 +389,12 @@ impl ThreadPriority {
 
     /// Returns the maximum scheduling priority for the POSIX policy.
     fn get_max_priority(policy: ThreadSchedulePolicy) -> Result<libc::c_int, Error> {
-        do_with_errno(|| unsafe { libc::sched_get_priority_max(policy.to_posix()) })
+        do_with_errno(|| unsafe { sched_get_priority_max(policy.to_posix()) })
     }
 
     /// Returns the minimum scheduling priority for the POSIX policy.
     fn get_min_priority(policy: ThreadSchedulePolicy) -> Result<libc::c_int, Error> {
-        do_with_errno(|| unsafe { libc::sched_get_priority_min(policy.to_posix()) })
+        do_with_errno(|| unsafe { sched_get_priority_min(policy.to_posix()) })
     }
 
     /// Checks that the passed priority value is within the range of allowed values for using with the provided policy.
@@ -588,7 +611,7 @@ pub fn set_thread_priority_and_policy(
                 .into_posix();
 
                 let ret = unsafe {
-                    libc::pthread_setschedparam(
+                    pthread_setschedparam(
                         native,
                         policy.to_posix(),
                         &params as *const libc::_Sched_param,
@@ -604,7 +627,7 @@ pub fn set_thread_priority_and_policy(
                 let params = ScheduleParams { sched_priority: 0 }.into_posix();
 
                 let ret = unsafe {
-                    libc::pthread_setschedparam(
+                    pthread_setschedparam(
                         native,
                         policy.to_posix(),
                         &params as *const libc::_Sched_param,
@@ -617,7 +640,7 @@ pub fn set_thread_priority_and_policy(
 
                 // Normal priority threads adjust relative priority through niceness.
                 set_errno(0);
-                let ret = unsafe { libc::setpriority(libc::PRIO_PROCESS, 0, fixed_priority) };
+                let ret = unsafe { setpriority(PRIO_PROCESS, 0, fixed_priority) };
                 if ret != 0 {
                     return Err(Error::OS(errno()));
                 }
@@ -678,7 +701,7 @@ pub fn thread_schedule_policy_param(
         let mut policy = 0i32;
         let mut params = ScheduleParams { sched_priority: 0 }.into_posix();
 
-        let ret = libc::pthread_getschedparam(
+        let ret = pthread_getschedparam(
             native,
             &mut policy as *mut libc::c_int,
             &mut params as *mut libc::_Sched_param,
