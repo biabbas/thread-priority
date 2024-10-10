@@ -519,8 +519,14 @@ impl ThreadBuilder {
     ///
     /// For more information, see
     /// [`crate::unix::ThreadSchedulePolicy`] and [`crate::unix::set_thread_priority_and_policy`].
-    #[cfg(unix)]
+    #[cfg(all(unix, not(target_os = "vxworks")))]
     pub fn policy<VALUE: Into<unix::ThreadSchedulePolicy>>(mut self, value: VALUE) -> Self {
+        self.policy = Some(value.into());
+        self
+    }
+
+    #[cfg(target_os = "vxworks")]
+    pub fn policy<VALUE: Into<vxworks::ThreadSchedulePolicy>>(mut self, value: VALUE) -> Self {
         self.policy = Some(value.into());
         self
     }
