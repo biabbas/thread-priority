@@ -34,7 +34,7 @@ extern "C"{
         policy: *mut libc::c_int,
         param: *mut libc::_Sched_param,
     ) -> libc::c_int;
-    pub fn setpriority(which: u32, who: u32, prio: i32) -> libc::c_int;
+    //pub fn setpriority(which: u32, who: u32, prio: i32) -> libc::c_int;
 }
 
 use crate::{Error, ThreadPriority, ThreadPriorityValue};
@@ -623,29 +623,7 @@ pub fn set_thread_priority_and_policy(
                     e => Err(Error::OS(e)),
                 }
             } else {
-                // Normal priority threads must be set with static priority 0.
-                let params = ScheduleParams { sched_priority: 0 }.into_posix();
-
-                let ret = unsafe {
-                    pthread_setschedparam(
-                        native,
-                        policy.to_posix(),
-                        &params as *const libc::_Sched_param,
-                    )
-                };
-
-                if ret != 0 {
-                    return Err(Error::OS(ret));
-                }
-
-                // Normal priority threads adjust relative priority through niceness.
-                set_errno(0);
-                let ret = unsafe { setpriority(PRIO_PROCESS, 0, fixed_priority) };
-                if ret != 0 {
-                    return Err(Error::OS(errno()));
-                }
-
-                Ok(())
+                panic!("unsupported in vxworks");
             }
         }
     }
