@@ -145,6 +145,9 @@
 #![warn(missing_docs)]
 #![deny(warnings)]
 
+#[cfg(target_os = "vxworks")]
+pub mod vxworks;
+
 #[cfg(any(
     target_os = "linux",
     target_os = "macos",
@@ -154,7 +157,6 @@
     target_os = "openbsd",
     target_os = "netbsd",
     target_os = "android",
-    target_os = "vxworks",
     target_arch = "wasm32",
 ))]
 pub mod unix;
@@ -170,10 +172,12 @@ use std::time::Duration;
     target_os = "openbsd",
     target_os = "netbsd",
     target_os = "android",
-    target_os = "vxworks",
     target_arch = "wasm32",
 ))]
 pub use unix::*;
+
+#[cfg(target_os = "vxworks")]
+pub use vxworks::*;
 
 #[cfg(windows)]
 pub mod windows;
