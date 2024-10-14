@@ -453,7 +453,7 @@ impl ThreadPriority {
                 // for the SCHED_OTHER policy.
                 // <https://www.usenix.org/legacy/publications/library/proceedings/bsdcon02/full_papers/gerbarg/gerbarg_html/index.html>
                 #[cfg(all(
-                    any(target_os = "macos", target_os = "ios"),
+                    any(target_os = "macos", target_os = "ios", target_os = "vxworks"),
                     not(target_arch = "wasm32")
                 ))]
                 ThreadSchedulePolicy::Normal(_) => {
