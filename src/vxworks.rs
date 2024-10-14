@@ -373,7 +373,7 @@ impl ThreadPriority {
                                 PriorityPolicyEdgeValueType::Maximum => NICENESS_MAX as libc::c_int,
                             })
                         }
-                    } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
+                    } else if #[cfg(any(target_os = "macos", target_os = "ios", target_os = "vxworks"))] {
                         // macOS/iOS allows specifying the priority using sched params.
                         get_edge_priority(policy)
                     } else {
@@ -597,7 +597,8 @@ pub fn set_thread_priority_and_policy(
             set_thread_priority_and_policy_deadline(native, priority)
         }
         _ => {
-            let fixed_priority = priority.to_posix(policy)?;
+            let fixed_priority = priority.to_posix(policy);
+            let fixed_priority = fixed_priority?;
             // On macOS and iOS it is possible to set the priority
             // this way.
             if matches!(policy, ThreadSchedulePolicy::Realtime(_))
