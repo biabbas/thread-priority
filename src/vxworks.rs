@@ -602,7 +602,7 @@ pub fn set_thread_priority_and_policy(
             // On macOS and iOS it is possible to set the priority
             // this way.
             if matches!(policy, ThreadSchedulePolicy::Realtime(_))
-                || cfg!(any(target_os = "macos", target_os = "ios"))
+                || cfg!(any(target_os = "macos", target_os = "ios", target_os = "vxworks"))
             {
                 // If the policy is a realtime one, the priority is set via
                 // pthread_setschedparam.
