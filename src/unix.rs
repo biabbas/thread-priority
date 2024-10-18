@@ -630,10 +630,15 @@ pub fn set_thread_priority_and_policy(
                 set_errno(0);
                 // VxWorks does not have setpriority function call. Control never
                 // reaches this statement because of the cfg condition in if
-                #[cfg(not(target_os = "vxworks"))]
-                let ret = unsafe { libc::setpriority(libc::PRIO_PROCESS, 0, fixed_priority) };
-                if ret != 0 {
-                    return Err(Error::OS(errno()));
+                cfg_if::cfg_if!{
+                    if #[cfg(target_os = "vxworks")]{
+                        return Err(Error::Priority("Could not set priority as set priority is not available on vxworks"));
+                    } else{
+                        let ret = unsafe { libc::setpriority(libc::PRIO_PROCESS, 0, fixed_priority) };
+                        if ret != 0 {
+                        return Err(Error::OS(errno()));
+                        }
+                    }
                 }
 
                 Ok(())
